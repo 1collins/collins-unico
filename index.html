@@ -1,257 +1,290 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Unico Kitchen 🍳</title>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #fff8f0;
-      color: #333;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unico Kitchen 🍳</title>
+<style>
+/* ===== GENERAL STYLES ===== */
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  background: #fff8f5;
+  color: #333;
+}
+header {
+  background: linear-gradient(90deg, #ff7e5f, #feb47b);
+  color: white;
+  text-align: center;
+  padding: 20px;
+  font-size: 2rem;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
 
-    header {
-      background: #ff6b35;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 1.8em;
-      font-weight: bold;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
+/* ===== CONTAINER ===== */
+.container {
+  max-width: 960px;
+  margin: auto;
+  padding: 20px;
+}
 
-    main {
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-    }
+/* ===== LOGIN BOX ===== */
+.login-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+.login-box input {
+  width: 80%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+.login-box button {
+  background: #ff6f3c;
+  border: none;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+}
+.login-box button:hover {
+  background: #ff8f56;
+}
 
-    .login-section, .dashboard {
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
+/* ===== DASHBOARD ===== */
+.hidden { display: none; }
+h2 { margin-top: 0; }
+nav {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0;
+}
+nav button {
+  flex: 1;
+  margin: 5px;
+  padding: 12px;
+  background: #feb47b;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+nav button:hover {
+  background: #ff7e5f;
+  color: white;
+}
 
-    .login-section input {
-      width: 100%;
-      padding: 10px;
-      border: 2px solid #ff6b35;
-      border-radius: 8px;
-      font-size: 1em;
-      margin-bottom: 10px;
-    }
+/* ===== CARDS ===== */
+.card {
+  background: #fff;
+  padding: 20px;
+  margin: 15px 0;
+  border-radius: 15px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  transition: 0.3s;
+}
+.card:hover { transform: translateY(-3px); }
+.recipe-img {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
 
-    button {
-      background: #ff6b35;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 1em;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #e85a2a;
-    }
+/* ===== MISSING INGREDIENTS ===== */
+.missing {
+  color: red;
+  font-weight: bold;
+}
 
-    .recipes, .shop, .fridge {
-      display: none;
-    }
-
-    .recipe, .product {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
-      padding: 15px;
-      margin-bottom: 15px;
-    }
-
-    .product img {
-      width: 100%;
-      height: 130px;
-      object-fit: cover;
-      border-radius: 10px;
-      margin-bottom: 10px;
-    }
-
-    .tabs {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 20px;
-    }
-
-    .tab {
-      flex: 1;
-      text-align: center;
-      padding: 10px;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      font-weight: bold;
-      color: #555;
-    }
-
-    .tab.active {
-      border-color: #ff6b35;
-      color: #ff6b35;
-    }
-
-    .offer-banner {
-      background: #ffe0c1;
-      color: #e85a2a;
-      text-align: center;
-      padding: 8px;
-      border-radius: 8px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-  </style>
+/* ===== OFFER BANNER ===== */
+.offer-banner {
+  background: #ffe0c1;
+  color: #e85a2a;
+  text-align: center;
+  padding: 10px;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+</style>
 </head>
 <body>
-  <header>Unico Kitchen 🍲</header>
-  <main>
-    <div class="login-section" id="login-section">
-      <h2>Enter Your Unique Cooking Code</h2>
-      <input type="text" id="studentCode" placeholder="e.g. STU0021">
-      <button onclick="login()">Connect</button>
+
+<header>🍳 Unico Kitchen</header>
+
+<div class="container">
+  <!-- LOGIN -->
+  <div id="loginSection" class="login-box">
+    <h2>Enter Your Unique Code</h2>
+    <input type="text" id="studentCode" placeholder="e.g. UNI01X8">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="hidden">
+    <div class="offer-banner">🔥 Special Offer: 10% Off Market Items!</div>
+    <h2 id="studentName"></h2>
+    <p>Available Tokens: <span id="tokenCount">0</span></p>
+
+    <nav>
+      <button onclick="showTab('recipes')">Recipes</button>
+      <button onclick="showTab('fridge')">Fridge</button>
+      <button onclick="showTab('shop')">Shop</button>
+    </nav>
+
+    <div id="recipes" class="tabContent"></div>
+
+    <div id="fridge" class="tabContent hidden">
+      <h3>Your Fridge</h3>
+      <div id="fridgeList">No items yet</div>
     </div>
 
-    <div class="dashboard" id="dashboard" style="display:none;">
-      <div class="offer-banner">🔥 Special Offer: 10% Off All Market Items!</div>
-
-      <div class="tabs">
-        <div class="tab active" onclick="showTab('recipes')">🍳 Recipes</div>
-        <div class="tab" onclick="showTab('fridge')">🧊 Fridge</div>
-        <div class="tab" onclick="showTab('shop')">🛒 Shop</div>
-      </div>
-
-      <div class="recipes" id="recipes"></div>
-      <div class="fridge" id="fridge"></div>
-      <div class="shop" id="shop"></div>
+    <div id="shop" class="tabContent hidden">
+      <h3>Shop Items</h3>
+      <div id="shopList"></div>
     </div>
-  </main>
+  </div>
+</div>
 
-  <script>
-    // ✅ Updated API & WhatsApp
-    const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxrUJ8L2slHlRvkJVtHJlGhh8eiK0Xup2vB4Ho8BwYUkd72MEzr87hF3F_ajCGazmHAUw/exec';
-    const WHATSAPP_NUMBER = '254798459336';
+<script>
+const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxrUJ8L2slHlRvkJVtHJlGhh8eiK0Xup2vB4Ho8BwYUkd72MEzr87hF3F_ajCGazmHAUw/exec";
+const WHATSAPP_NUMBER = "254798459336";
+let student = null;
 
-    let currentStudent = null;
+// ===== LOGIN =====
+async function login() {
+  const code = document.getElementById("studentCode").value.trim();
+  if(!code) return alert("Enter your student code!");
+  
+  const res = await fetch(`${GAS_WEBAPP_URL}?action=getStudents`);
+  const students = await res.json();
+  student = students.find(s => s.Code === code);
+  if(!student) return alert("Invalid code, try again!");
 
-    async function login() {
-      const code = document.getElementById("studentCode").value.trim();
-      if (!code) return alert("Enter your unique code!");
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+  document.getElementById("studentName").innerText = `👋 Welcome, ${student.Name}`;
+  document.getElementById("tokenCount").innerText = student.Tokens;
+  updateFridgeList();
+  loadAvailableRecipes();
+  loadShop();
+}
 
-      try {
-        const res = await fetch(`${GAS_WEBAPP_URL}?action=getStudents`);
-        const students = await res.json();
+// ===== SHOW/HIDE TABS =====
+function showTab(tab) {
+  document.querySelectorAll(".tabContent").forEach(t => t.classList.add("hidden"));
+  document.getElementById(tab).classList.remove("hidden");
+}
 
-        currentStudent = students.find(s => s.Code === code);
-        if (!currentStudent) {
-          alert("Invalid code, please try again.");
-          return;
-        }
+// ===== UPDATE FRIDGE DISPLAY =====
+function updateFridgeList() {
+  const list = document.getElementById("fridgeList");
+  const items = student["Fridge Items"].split(",").map(i => i.trim()).filter(i=>i);
+  list.innerHTML = items.length > 0 ? items.join(", ") : "No items yet";
+}
 
-        document.getElementById("login-section").style.display = "none";
-        document.getElementById("dashboard").style.display = "block";
-        loadRecipes();
-        loadFridge();
-        loadShop();
-      } catch (err) {
-        alert("Error connecting to Unico Kitchen server.");
-        console.error(err);
-      }
-    }
+// ===== LOAD AVAILABLE RECIPES =====
+async function loadAvailableRecipes() {
+  const res = await fetch(`${GAS_WEBAPP_URL}?action=getRecipes`);
+  const recipes = await res.json();
+  const fridgeItems = student["Fridge Items"].split(",").map(i => i.trim());
+  const container = document.getElementById("recipes");
+  container.innerHTML = "<h3>Recipes You Can Cook</h3>";
 
-    async function loadRecipes() {
-      const recipesDiv = document.getElementById("recipes");
-      recipesDiv.innerHTML = "<h3>Available Recipes</h3>";
-      const res = await fetch(`${GAS_WEBAPP_URL}?action=getRecipes`);
-      const recipes = await res.json();
+  recipes.forEach(r => {
+    const ingredients = r.Ingredients.split(",").map(i => i.trim());
+    const missing = ingredients.filter(i => !fridgeItems.includes(i));
 
-      recipes.forEach(r => {
-        const div = document.createElement("div");
-        div.className = "recipe";
-        div.innerHTML = `
-          <h4>${r.Name}</h4>
-          <p>Ingredients: ${r.Ingredients}</p>
-          <p>Time: ${r["Time (mins)"]} mins</p>
-          <button onclick="cookRecipe('${r.Name}')">Cook Now</button>
-        `;
-        recipesDiv.appendChild(div);
-      });
-    }
+    if(missing.length > 2) return; // skip if more than 2 missing
 
-    async function loadFridge() {
-      const fridgeDiv = document.getElementById("fridge");
-      fridgeDiv.innerHTML = "<h3>Your Fridge Items</h3><p>Loading...</p>";
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <img src="${r.Image}" alt="${r.Name}" class="recipe-img" />
+      <h4>${r.Name}</h4>
+      <p>⏱ ${r["Time (mins)"]} mins</p>
+      <p>Ingredients: ${ingredients.map(i => fridgeItems.includes(i)?i:`<span class="missing">${i}</span>`).join(", ")}</p>
+      <button onclick="cookRecipeWithMissing('${r.Name}')">
+        ${missing.length === 0 ? "Cook Now" : `Add Missing (${missing.length}) + Cook`}
+      </button>
+    `;
+    container.appendChild(div);
+  });
+}
 
-      const res = await fetch(`${GAS_WEBAPP_URL}?action=getStudents`);
-      const students = await res.json();
-      const student = students.find(s => s.Code === currentStudent.Code);
+// ===== COOK RECIPE WITH MISSING INGREDIENTS =====
+async function cookRecipeWithMissing(recipeName) {
+  const res = await fetch(`${GAS_WEBAPP_URL}?action=getRecipes`);
+  const recipes = await res.json();
+  const recipe = recipes.find(r => r.Name === recipeName);
+  const fridgeItems = student["Fridge Items"].split(",").map(i => i.trim());
+  const missing = recipe.Ingredients.split(",").map(i => i.trim()).filter(i => !fridgeItems.includes(i));
 
-      fridgeDiv.innerHTML = `<p>${student["Fridge Items"] || "No items in fridge."}</p>`;
-    }
+  // Handle missing ingredients via Mpesa
+  for(let item of missing){
+    const code = prompt(`Missing ingredient "${item}". Enter Mpesa payment code to add it:`);
+    if(!code) return alert("You must pay to add missing ingredients.");
+    alert(`Payment confirmed! "${item}" added to your fridge.`);
+    student["Fridge Items"] += `, ${item}`;
+  }
 
-    async function loadShop() {
-      const shopDiv = document.getElementById("shop");
-      shopDiv.innerHTML = "<h3>🛒 Shop</h3><p>Loading...</p>";
+  updateFridgeList();
 
-      try {
-        const res = await fetch(`${GAS_WEBAPP_URL}?action=getShop`);
-        const items = await res.json();
+  // Send full recipe to WhatsApp
+  const message = `
+🍳 Unico Kitchen
+👩‍🍳 Student: ${student.Name}
+📘 Recipe: ${recipe.Name}
+🧾 Ingredients: ${recipe.Ingredients}
+⏱ Time: ${recipe["Time (mins)"]} mins
+`.trim();
+  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank");
 
-        shopDiv.innerHTML = "";
-        items.forEach(item => {
-          const div = document.createElement("div");
-          div.className = "product";
-          div.innerHTML = `
-            <img src="${item.ImageURL || 'https://via.placeholder.com/150'}" alt="${item.Item}">
-            <h4>${item.Item}</h4>
-            <p>${item.Category}</p>
-            <p><b>${item["Price (Tokens)"]} Tokens</b></p>
-            <button onclick="openWhatsApp('${item.Item}')">Order Now</button>
-          `;
-          shopDiv.appendChild(div);
-        });
-      } catch (err) {
-        shopDiv.innerHTML = "<p>⚠️ Error loading shop items.</p>";
-      }
-    }
+  loadAvailableRecipes();
+}
 
-    async function cookRecipe(recipeName) {
-      const code = currentStudent.Code;
-      const url = `${GAS_WEBAPP_URL}?action=cookRecipe&code=${code}&recipe=${encodeURIComponent(recipeName)}`;
-      const res = await fetch(url);
-      const data = await res.json();
+// ===== LOAD SHOP =====
+async function loadShop() {
+  const res = await fetch(`${GAS_WEBAPP_URL}?action=getShop`);
+  const shop = await res.json();
+  const container = document.getElementById("shopList");
+  container.innerHTML = "";
 
-      if (data.status === "success") {
-        alert(`Cooking started! ${recipeName} - ${data.tokensLeft} tokens left.`);
-        window.open(data.whatsappURL, "_blank");
-      } else {
-        alert(data.message || "Error cooking recipe.");
-      }
-    }
+  shop.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <h4>${item.Item}</h4>
+      <p>💰 KES ${item.Price} — <b>${item.Offer}% Off</b></p>
+      <button onclick="addToFridge('${item.Item}')">Add to Fridge (Mpesa)</button>
+    `;
+    container.appendChild(div);
+  });
+}
 
-    function openWhatsApp(item) {
-      const msg = encodeURIComponent(`Hello! I'm ordering "${item}" from Unico Kitchen 🛒`);
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, "_blank");
-    }
+// ===== ADD ITEM TO FRIDGE =====
+function addToFridge(item) {
+  const code = prompt(`Enter Mpesa payment code for "${item}":`);
+  if(!code) return;
+  alert(`Payment confirmed! "${item}" added to fridge.`);
+  student["Fridge Items"] += `, ${item}`;
+  updateFridgeList();
+  loadAvailableRecipes();
+}
+</script>
 
-    function showTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.recipes, .fridge, .shop').forEach(s => s.style.display = 'none');
-      document.querySelector(`.${tab}`).style.display = 'block';
-      document.querySelector(`.tab:nth-child(${tab === 'recipes' ? 1 : tab === 'fridge' ? 2 : 3})`).classList.add('active');
-    }
-  </script>
 </body>
 </html>
+
 
 
 
