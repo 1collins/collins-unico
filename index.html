@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unico Kitchen 🍳</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fff8f0;
+      color: #333;
+    }
+
+    header {
+      background: #ff6b35;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    main {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .login-section, .dashboard {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+
+    .login-section input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #ff6b35;
+      border-radius: 8px;
+      font-size: 1em;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: #ff6b35;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #e85a2a;
+    }
+
+    .recipes, .shop, .fridge {
+      display: none;
+    }
+
+    .recipe, .product {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .tab.active {
+      border-color: #ff6b35;
+      color: #ff6b35;
+    }
+
+    .offer-banner {
+      background: #ffe0c1;
+      color: #e85a2a;
+      text-align: center;
+      padding: 8px;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>Unico Kitchen 🍲</header>
+  <main>
+    <div class="login-section" id="login-section">
+      <h2>Enter Your Unique Cooking Code</h2>
+      <input type="text" id="studentCode" placeholder="e.g. STU0021">
+      <button onclick="login()">Connect</button>
+    </div>
+
+    <div class="dashboard" id="dashboard" style="display:none;">
+      <div class="offer-banner">🔥 Special Offer: 10% Off All Market Items!</div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('recipes')">🍳 Recipes</div>
+        <div class="tab" onclick="showTab('fridge')">🧊 Fridge</div>
+        <div class="tab" onclick="showTab('shop')">🛒 Shop</div>
+      </div>
+
+      <div class="recipes" id="recipes"></div>
+      <div class="fridge" id="fridge"></div>
+      <div class="shop" id="shop"></div>
+    </div>
+  </main>
+
+  <script>
+    const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxVT2L97y1MUTSzD2Vr4kXPuEQkfhWiHkXMDquLdu0pTwNJOnZWf9lM-Y4foqOzHjWL/exec';
+    const WHATSAPP_NUMBER = '254798459336';
+
+    let currentStudent = null;
+
+    async function login() {
+      const code = document.getElementById("studentCode").value.trim();
+      if (!code) return alert("Enter your unique code!");
+      try {
+        const res = await fetch(`${GAS_WEBAPP_URL}?action=getStudents`);
+        const students = await res.json();
+        currentStudent = students.find(s => s.Code === code);
+        if (!currentStudent) {
+          alert("Invalid code, please try again.");
+          return;
+        }
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        loadRecipes();
+      } catch (err) {
+        alert("Error connecting to Unico Kitchen server.");
+        console.error(err);
+      }
+    }
+
+    async function loadRecipes() {
+      const recipesDiv = document.getElementById("recipes");
+      recipesDiv.innerHTML = "<h3>Available Recipes</h3>";
+      const res = await fetch(`${GAS_WEBAPP_URL}?action=getRecipes`);
+      const recipes = await res.json();
+      recipes.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "recipe";
+        div.innerHTML = `
+          <h4>${r.Name}</h4>
+          <p>Ingredients: ${r.Ingredients}</p>
+          <p>Time: ${r["Time (mins)"]} mins</p>
+          <button onclick="cookRecipe('${r.Name}')">Cook Now</button>
+        `;
+        recipesDiv.appendChild(div);
+      });
+    }
+
+    async function cookRecipe(recipeName) {
+      const code = currentStudent.Code;
+      const url = `${GAS_WEBAPP_URL}?action=cookRecipe&code=${code}&recipe=${encodeURIComponent(recipeName)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.status === "success") {
+        alert(`Cooking started! ${recipeName} used ${data.tokensLeft} tokens left.`);
+        window.open(data.whatsappURL, "_blank");
+      } else {
+        alert(data.message || "Error cooking recipe.");
+      }
+    }
+
+    function showTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.recipes, .fridge, .shop').forEach(s => s.style.display = 'none');
+      document.querySelector(`.${tab}`).style.display = 'block';
+      document.querySelector(`.tab:nth-child(${tab === 'recipes' ? 1 : tab === 'fridge' ? 2 : 3})`).classList.add('active');
+    }
+  </script>
+</body>
+</html>
