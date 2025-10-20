@@ -1,21 +1,726 @@
-<input type="text" id="studentCode" placeholder="Enter code e.g. TEST001"/>
-<button onclick="login()">Login</button>
-<script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwpaKDvJxxuvxZfqkorwP_jXwd-_VMBO0dhzq-nWOKEjgVjVN8AunK4kLf9S4E59RZqrg/exec";
-let student = null;
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Unico Kitchen — Recipes, Shop & Gas</title>
+<style>
+  :root{--accent:#ff6b35;--muted:#666;--bg:#fafafa}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,system-ui,sans-serif;background:var(--bg);color:#111}
+  header{background:#fff;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);position:sticky;top:0;z-index:60}
+  .container{max-width:1000px;margin:0 auto;padding:12px}
+  .header-row{display:flex;align-items:center;gap:12px}
+  .brand{font-weight:800;color:var(--accent);font-size:18px}
+  .tabs{margin-left:20px;display:flex;gap:8px}
+  .tab{padding:8px 10px;border-radius:8px;cursor:pointer}
+  .tab.active{background:#fff;border:1px solid #eee;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .count{background:var(--accent);color:#fff;padding:6px 10px;border-radius:999px;font-weight:700}
+  button{cursor:pointer;border:none;padding:8px 10px;border-radius:8px;background:var(--accent);color:#fff}
+  .ghost{background:#eee;color:#111}
+  main{padding:18px}
+  .quickbar{background:#fff;padding:8px 12px;border-bottom:1px solid #f3f3f3;display:flex;gap:12px;align-items:center;justify-content:center}
+  .quick-item{display:flex;gap:8px;align-items:center;background:#fff;padding:6px;border-radius:8px;border:1px solid #f0f0f0}
+  .blink{ animation: blinkAnim .9s ease-in-out; }
+  @keyframes blinkAnim { 0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)} }
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.04)}
+  .card img{width:100%;height:150px;object-fit:cover;border-radius:8px}
+  .buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .hidden{display:none}
+  .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+  .shop-item img{height:110px;width:100%;object-fit:cover;border-radius:8px}
+  .cart-panel{position:fixed;right:16px;bottom:16px;background:#fff;padding:12px;border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.12);width:320px;max-height:70vh;overflow:auto;z-index:70}
+  .ingredient-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed #f0f0f0}
+  footer{padding:16px;text-align:center;color:var(--muted);font-size:13px}
+  input[type=number]{padding:6px;border:1px solid #eee;border-radius:6px}
+  small.note{color:var(--muted);display:block;margin-top:6px}
+  @media (max-width:720px){ .grid{grid-template-columns:1fr} .tabs{display:none} .cart-panel{width:92%;right:4%} .quickbar{flex-direction:column;gap:8px} }
+</style>
+</head>
+<body>
 
-async function login(){
-  const code = document.getElementById("studentCode").value.trim();
-  if(!code){alert("Enter code"); return;}
-  try{
-    const res = await fetch(`${GAS_URL}?action=getStudents`);
-    const data = await res.json();
-    student = data.find(s=>s.Code===code);
-    if(!student){alert("Invalid code"); return;}
-    alert(`Welcome ${student.Name}, Tokens: ${student.Tokens}`);
-  } catch(e){
-    console.error(e);
-    alert("Error fetching student data");
+<header>
+  <div class="container header-row">
+    <div style="display:flex;align-items:center;gap:12px">
+      <!-- EDIT: Replace logo path if you upload to your repo (recommended) -->
+      <img id="logo" src="https://chatgpt.com/backend-api/estuary/content?id=file_000000000be46243bf003c9c16ca6bd8&ts=489056&p=fs&cid=1&sig=47850247fa0cf989f007af960a690ab0e8320ab43338b560e3837b4c507e6078&v=0" alt="logo" style="width:56px;height:56px;border-radius:10px;object-fit:cover">
+      <div>
+        <div class="brand">Unico Kitchen</div>
+        <small class="note">You cook — we follow (recipes, shop & gas)</small>
+      </div>
+    </div>
+
+    <nav class="tabs" id="navTabs" aria-label="Main tabs">
+      <div class="tab active" data-tab="recipes">Recipes</div>
+      <div class="tab" data-tab="shop">Shop</div>
+      <div class="tab" data-tab="gas">Gas</div>
+      <div class="tab" data-tab="fridge">Fridge</div>
+    </nav>
+
+    <div class="actions">
+      <div id="cartCount" class="count">0</div>
+      <button id="openCartBtn" class="ghost">Cart</button>
+      <button id="sendOrderHeader" class="ghost">Send Order</button>
+      <button id="sendPlanHeader" class="ghost">Send Plan</button>
+    </div>
+  </div>
+
+  <div class="quickbar container" id="quickBar">
+    <div style="font-weight:700;color:var(--muted)">Quick Buy:</div>
+    <div id="quickItems" style="display:flex;gap:8px;align-items:center"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-left:8px">
+      <label style="font-size:14px">Quick Gas:</label>
+      <input id="quickGasQty" type="number" min="1" value="1" style="width:70px;padding:6px;border-radius:6px;border:1px solid #eee">
+      <button id="quickAddGas" class="">Add Gas</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section id="recipes" class="tab-panel">
+    <h2>All Recipes</h2>
+    <small class="note">Click "Cook (WhatsApp)" to send a friendly recipe message (no prices).</small>
+    <div id="recipesGrid" class="grid" style="margin-top:12px"></div>
+  </section>
+
+  <section id="shop" class="tab-panel hidden">
+    <h2>Shop</h2>
+    <small class="note">Add shop items (priced) to the cart; Add to Fridge saves ingredients (no price).</small>
+    <div id="shopGrid" class="shop-grid" style="margin-top:12px"></div>
+  </section>
+
+  <section id="gas" class="tab-panel hidden">
+    <h2>Gas Tokens</h2>
+    <div style="background:#fff;padding:12px;border-radius:8px">
+      <p class="note">Each gas minute = 1 token (KES per token shown below).</p>
+      <div style="display:flex;gap:10px;align-items:center">
+        <label>Tokens: <input id="gasQty" type="number" min="1" value="1" style="width:80px"></label>
+        <div>Price/token: <strong id="tokenPrice">50</strong> KES</div>
+        <button id="addGas">Add</button>
+      </div>
+      <div style="margin-top:8px">Estimated: <strong id="gasTotal">50</strong> KES</div>
+    </div>
+  </section>
+
+  <section id="fridge" class="tab-panel hidden">
+    <h2>Your Fridge</h2>
+    <small class="note">Saved ingredients (no prices). Click "View in shop" to jump to the shop item.</small>
+    <div id="fridgeList" style="margin-top:12px"></div>
+  </section>
+</main>
+
+<div id="cartPanel" class="cart-panel" style="display:none" aria-live="polite">
+  <h3 style="margin:0 0 8px">Cart</h3>
+  <div id="cartItems"></div>
+  <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+    <div><strong>Total:</strong> <span id="cartTotal">0</span> KES</div>
+    <div style="display:flex;gap:8px">
+      <button id="clearCart" class="ghost">Clear</button>
+      <button id="sendCart">Send Order</button>
+    </div>
+  </div>
+</div>
+
+<footer>Built for Unico Kitchen — edit logo, phone, recipes and shop items in the JS below.</footer>
+
+<script>
+/* ============================
+   CONFIG — edit these values
+   ============================ */
+const CONFIG = {
+  PHONE: '254798459336',        // <-- your WhatsApp number (no +)
+  TOKEN_PRICE: 50,              // <-- gas token price (KES)
+  featuredShopIds: ['rice1','noodles1','oil1']
+};
+
+/* ============================
+   RECIPES — REPLACED PER YOUR LIST
+   (Only recipes changed here. Shop prices left as is.)
+   If you have local photos, upload them to repo/images/ and keep filenames below.
+   ============================ */
+const recipes = [
+  {
+    id: 'beef-pilau',
+    title: 'Beef Pilau',
+    image: 'https://img-global.cpcdn.com/recipes/1b7f76052ea23f19/300x426cq80/beef-pilau-recipe-main-photo.webp',
+    ingredients: [
+      {name: '2 cups rice', shopId: 'rice1'},
+      {name: '150 g boiled beef'},
+      {name: 'Pilau masala'},
+      {name: '2 large chopped onion', shopId: 'onion1'},
+      {name: '2 tbs garlic paste'},
+      {name: '1 tbs ginger paste'},
+      {name: '3 tbs cooking oil', shopId: 'oil1'},
+      {name: '4 cups boiled water / bone broth'},
+      {name: 'Salt'}
+    ],
+    steps: [
+      'In a pan add the cooking oil and the chopped onions.',
+      'Cook until lightly brown, add ginger and garlic paste.',
+      'Cook until golden brown; add boiled beef, pilau masala, salt and rice.',
+      'Add bone broth / water and cook under low heat until rice is done.',
+      'Serve and enjoy. (Serve with kachumbari and ripe banana.)',
+      'Note: the brown colour comes from golden onions, not the pilau masala.'
+    ],
+    time: '1 hr'
+  },
+
+  {
+    id: 'chicken-potato-curry',
+    title: 'Chicken & Potato Curry',
+    image: 'https://img-global.cpcdn.com/recipes/3456f5862a69e922/300x426cq80/chicken-and-potato-curry-recipe-main-photo.webp',
+    ingredients: [
+      {name: '500 g chicken (thighs or breasts)'},
+      {name: '2-4 medium potatoes, peeled & cubed'},
+      {name: '1 large onion, chopped', shopId: 'onion1'},
+      {name: '2 garlic cloves, minced'},
+      {name: '1-inch ginger, grated'},
+      {name: '2 tbs curry powder'},
+      {name: '1 tsp turmeric powder'},
+      {name: '1 tsp cumin seeds (optional)'},
+      {name: '1 can (400 ml) coconut milk'},
+      {name: '1 cup chicken broth or water'},
+      {name: 'Salt & pepper to taste'},
+      {name: 'Fresh coriander for garnish'}
+    ],
+    steps: [
+      'Prep ingredients: cut chicken, cube potatoes, chop onion, mince garlic, grate ginger.',
+      'Heat oil, add cumin seeds to sizzle, add onion and sauté until golden.',
+      'Stir in garlic, ginger and chilies. Add curry powder & turmeric; toast 30s.',
+      'Add chicken, brown 5-7 min. Add potatoes, coconut milk and broth; season.',
+      'Simmer 20-25 min until potatoes tender and chicken cooked.',
+      'Garnish with coriander and serve with rice/ugali/chapati.'
+    ],
+    time: '45 min'
+  },
+
+  {
+    id: 'swahili-chicken-biryani',
+    title: 'Swahili Chicken Biryani',
+    image: 'https://img-global.cpcdn.com/recipes/9c1df591132918a4/300x426cq80/swahili-chicken-biryani-recipe-main-photo.webp',
+    ingredients: [
+      {name: '1.5 kg chicken'},
+      {name: '4 cans crushed tomatoes (or 8-10 fresh tomatoes)'},
+      {name: '2 small cans tomato paste'},
+      {name: '4 large onions', shopId: 'onion1'},
+      {name: '1 tsp ginger & garlic paste'},
+      {name: '1 tbsp ghee or cooking oil', shopId: 'oil1'},
+      {name: '1/2 glass plain yoghurt'},
+      {name: '6 eggs'},
+      {name: '3 cups basmati rice', shopId: 'rice1'},
+      {name: 'bay leaf, thyme, cinnamon, green cardamom pods'},
+      {name: 'Salt & spices'}
+    ],
+    steps: [
+      'Wash and soak rice 30 min. Par-boil rice and drain.',
+      'Boil eggs, peel and set aside. Brown onions in oil and set aside.',
+      'Make tomato sauce: cook crushed tomatoes and paste until oil rises.',
+      'Spice sauce with garam masala, biryani masala, turmeric, coriander, stock cubes.',
+      'Add boiled chicken to sauce with yoghurt, simmer until tender.',
+      'Layer par-cooked rice and sauce; bake or steam covered until fully cooked.',
+      'Mix gently, add boiled eggs and garnish with coriander.'
+    ],
+    time: '1 hr 25 min'
+  },
+
+  {
+    id: 'ugali-greens-pork',
+    title: 'Ugali, Greens & Pork',
+    image: 'https://img-global.cpcdn.com/recipes/765a241811a7d3e2/300x426f0.5_0.5_1.0q80/ugaligreens-pork-recipe-main-photo.webp',
+    ingredients: [
+      {name: '300 g maize flour (for ugali)', shopId: 'maize1'},
+      {name: '4 bunches kales / spinach', shopId: 'veg1'},
+      {name: '1/2 kg pork'},
+      {name: '1 onion', shopId: 'onion1'},
+      {name: '2 tomatoes'},
+      {name: '1 bunch coriander'},
+      {name: 'Spices: black pepper, ginger, cayenne, salt'}
+    ],
+    steps: [
+      'Clean pork; simmer to reduce excess water and partially cook.',
+      'Add onion, garlic and spices; cook until flavours blend.',
+      'Add tomatoes and mchuzi mix; simmer a few minutes.',
+      'Stir in chopped coriander and serve with ugali and steamed greens.'
+    ],
+    time: '1 hr'
+  },
+
+  {
+    id: 'ugali-basic',
+    title: 'Ugali (Basic)',
+    image: 'https://img-global.cpcdn.com/recipes/260568fdfcdfb88c/300x426cq80/ugali-recipe-main-photo.webp',
+    ingredients: [
+      {name: 'Maize flour', shopId: 'maize1'},
+      {name: 'Water'}
+    ],
+    steps: [
+      'Boil water in a deep pan.',
+      'Add maize flour slowly while stirring vigorously with a wooden spoon.',
+      'Cook until firm, press against sides to break lumps and cook 2-3 more minutes.',
+      'Turn out and serve.'
+    ]
+  },
+
+  {
+    id: 'ugali-steamed-kales',
+    title: 'Ugali & Steamed Kales',
+    image: 'https://img-global.cpcdn.com/recipes/e75d4cb3bdc30c85/300x426cq80/ugali-and-steamed-kales-recipe-main-photo.webp',
+    ingredients: [
+      {name: 'Hostess maize flour (1 cup)', shopId: 'maize1'},
+      {name: 'Kales', shopId: 'veg1'},
+      {name: 'Cooking oil'},
+      {name: 'Salt'}
+    ],
+    steps: [
+      'Boil water, add flour gradually until desired thickness.',
+      'Cook 10 minutes and set aside.',
+      'Heat oil, add sliced kales, cover and steam 10 minutes.',
+      'Serve with ugali.'
+    ]
+  },
+
+  {
+    id: 'ugali-liver',
+    title: 'Ugali, Steamed Kales & Liver',
+    image: 'https://img-global.cpcdn.com/recipes/96ba99b07919d352/300x426cq80/ugali-steamed-kales-and-liver-recipe-main-photo.webp',
+    ingredients: [
+      {name: 'Ready ugali'},
+      {name: 'Kales', shopId: 'veg1'},
+      {name: '1 tomato'},
+      {name: '1 onion', shopId: 'onion1'},
+      {name: 'Cooking oil'}
+    ],
+    steps: [
+      'Steam kales.',
+      'Fry onion until golden, add tomato and cook.',
+      'Add pre-boiled liver and simmer 8 minutes, serve.'
+    ]
+  },
+
+  {
+    id: 'ugali-omena-sukuma',
+    title: 'Ugali, Omena & Sukuma',
+    image: 'https://img-global.cpcdn.com/recipes/0a6a9c2483569e48/300x426cq80/githeri-recipe-main-photo.webp',
+    ingredients: [
+      {name: '250 g maize flour', shopId: 'maize1'},
+      {name: '1/4 kg omena'},
+      {name: '2 tomatoes'},
+      {name: 'Onions'},
+      {name: 'Kales', shopId: 'veg1'},
+      {name: 'Spices & oil'}
+    ],
+    steps: [
+      'Prepare ugali as usual.',
+      'Clean and dry-fry omena, then fry with onions and tomatoes.',
+      'Cook sukuma (kales) separately and serve alongside.'
+    ]
+  },
+
+  {
+    id: 'ugali-mayai-kales',
+    title: 'Ugali, Mayai & Steamed Kales',
+    image: 'https://img-global.cpcdn.com/recipes/35761b2bdf0b5b67/300x426cq80/ugali-mayai-na-steamed-kales-recipe-main-photo.webp',
+    ingredients: [
+      {name: 'Maize flour', shopId: 'maize1'},
+      {name: '2 eggs'},
+      {name: '1 tomato'},
+      {name: '1 medium onion', shopId: 'onion1'},
+      {name: 'Kales', shopId: 'veg1'}
+    ],
+    steps: [
+      'Prepare ugali.',
+      'Fry onion, add tomato then beaten eggs and cook.',
+      'Steam kales for 5 minutes, serve.'
+    ]
+  },
+
+  {
+    id: 'scrambled-eggs-ugali',
+    title: 'Scrambled Eggs & Ugali',
+    image: 'https://img-global.cpcdn.com/recipes/bc0b2ad7cde408b3/300x426cq80/scrambled-eggsugali-endofyearchallenge-recipe-main-photo.webp',
+    ingredients: [
+      {name: '4 eggs'},
+      {name: '2 cubes Royco (stock)'},
+      {name: '1 onion', shopId: 'onion1'},
+      {name: '2 tomatoes'},
+      {name: '2 tsp cooking oil', shopId: 'oil1'},
+      {name: 'Salt'}
+    ],
+    steps: [
+      'Chop onion and tomato. Fry onion until golden.',
+      'Add tomato, salt, stock cubes; simmer.',
+      'Add beaten eggs and stir until cooked. Serve with ugali.'
+    ],
+    time: '10 min'
+  },
+
+  {
+    id: 'eggless-pancakes',
+    title: 'Eggless & Dairy-Free Fluffy Pancakes',
+    image: 'https://img-global.cpcdn.com/recipes/ac58ac365ffce444/300x426f0.512567_0.5_1.0q80/eggless-and-dairy-free-fluffy-pancakes-recipe-main-photo.webp',
+    ingredients: [
+      {name: '2 cups all-purpose flour', shopId: 'flour1'},
+      {name: '4 tbsp sugar'},
+      {name: '4 tsp baking powder'},
+      {name: '1/2 tsp salt'},
+      {name: '2 cups water'},
+      {name: '4 tbsp oil', shopId: 'oil1'},
+      {name: '2 tsp vanilla (optional)'}
+    ],
+    steps: [
+      'Whisk dry ingredients, add water, oil and vanilla; rest 5 minutes.',
+      'Cook 1/4 cup batter per pancake until bubbles form, flip and cook until golden.'
+    ]
+  },
+
+  {
+    id: 'blueberry-mini-pancakes',
+    title: 'Eggless Blueberry Mini Pancakes',
+    image: 'https://img-global.cpcdn.com/recipes/d7ac2ef1bd4e54ab/300x426cq80/eggless-blueberry-mini-pancakes-recipe-main-photo.webp',
+    ingredients: [
+      {name: '1.5 cups flour', shopId: 'flour1'},
+      {name: '2 tsp baking powder'},
+      {name: '2 tbsp oil', shopId: 'oil1'},
+      {name: '1 cup milk'},
+      {name: '1/8 cup blueberries'}
+    ],
+    steps: [
+      'Mix ingredients, rest 5 min. Spoon batter onto pan and cook 2-3 minutes each side.',
+      'Serve warm with tea.'
+    ],
+    time: '25 min'
+  },
+
+  {
+    id: 'chicken-stew',
+    title: 'Chicken Stew',
+    image: 'https://images.unsplash.com/photo-1546069901-eacef0df6022?w=1200&q=60',
+    ingredients: [
+      {name: 'Half chicken', shopId: 'chicken1'},
+      {name: 'Spices: ginger, garlic, chicken masala, black pepper, soy sauce'},
+      {name: 'Onions, carrots, capsicum, courgette'},
+      {name: '200 ml water'}
+    ],
+    steps: [
+      'Clean chicken and marinate with spices; fry until golden.',
+      'Add onions and other vegetables; add water and simmer 1–1.5 hours until tender.',
+      'Serve with chapati, rice or ugali.'
+    ],
+    time: '1 hr 30 min'
   }
+];
+
+/* ============================
+   SHOP ITEMS (prices left intact)
+   (unchanged — do not edit for this update)
+   ============================ */
+const shopItems = [
+  { id:'rice1', name:'Basmati Rice 2kg', price:200, image:'https://images.unsplash.com/photo-1604908177522-7c2c9fa0d6c3?w=800&q=60' },
+  { id:'pilau-spice', name:'Pilau Masala 100g', price:60, image:'https://images.unsplash.com/photo-1543353071-873f17a7a088?w=800&q=60' },
+  { id:'onion1', name:'Onions 1kg', price:60, image:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=60' },
+  { id:'salt1', name:'Salt 1kg', price:30, image:'https://images.unsplash.com/photo-1585238342028-7c6a3c6e0a0f?w=800&q=60' },
+  { id:'garlic1', name:'Garlic paste 200g', price:80, image:'https://images.unsplash.com/photo-1543353071-873f17a7a088?w=800&q=60' },
+  { id:'chicken1', name:'Chicken 1kg', price:450, image:'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=60' },
+  { id:'maize1', name:'Maize meal 2kg', price:150, image:'https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=800&q=60' },
+  { id:'flour1', name:'All-purpose flour 2kg', price:220, image:'https://images.unsplash.com/photo-1586201375761-83865001e7a5?w=800&q=60' },
+  { id:'oil1', name:'Cooking oil 1L', price:350, image:'https://images.unsplash.com/photo-1580910051070-8a6c30a08a4a?w=800&q=60' },
+  { id:'noodles1', name:'Instant noodles (1pc)', price:70, image:'https://images.unsplash.com/photo-1586816005257-8b6f50b2f2b0?w=800&q=60' },
+  { id:'veg1', name:'Mixed veg 500g', price:120, image:'https://images.unsplash.com/photo-1506806732259-39c2d0268443?w=800&q=60' }
+];
+
+/* ============================
+   STATE (localStorage)
+   ============================ */
+const state = {
+  cart: JSON.parse(localStorage.getItem('uk_cart') || '[]'),
+  fridge: JSON.parse(localStorage.getItem('uk_fridge') || '[]'),
+  planned: JSON.parse(localStorage.getItem('uk_planned') || '[]'),
+  tokenPrice: Number(localStorage.getItem('uk_tokenPrice') || CONFIG.TOKEN_PRICE)
+};
+
+/* ============================
+   Helpers & UI
+   ============================ */
+function saveState(){
+  localStorage.setItem('uk_cart', JSON.stringify(state.cart));
+  localStorage.setItem('uk_fridge', JSON.stringify(state.fridge));
+  localStorage.setItem('uk_planned', JSON.stringify(state.planned));
+  localStorage.setItem('uk_tokenPrice', String(state.tokenPrice));
+  renderCart(); renderFridge(); renderCartCount();
 }
+function findShopById(id){ return shopItems.find(s => s.id === id) }
+function blink(el){ if(!el) return; el.classList.add('blink'); setTimeout(()=>el.classList.remove('blink'),900); }
+function escapeHtml(text){ return String(text||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ============================
+   Render functions
+   ============================ */
+function renderQuickBar(){
+  const quick = document.getElementById('quickItems');
+  quick.innerHTML = '';
+  const featured = CONFIG.featuredShopIds;
+  featured.forEach(id=>{
+    const s = findShopById(id);
+    if(!s) return;
+    const div = document.createElement('div'); div.className='quick-item';
+    div.innerHTML = `<div style="font-size:13px">${escapeHtml(s.name)}</div><div style="font-weight:700">KES ${s.price}</div><div><button onclick="quickAddShop('${s.id}', this)" class="ghost">Add</button></div>`;
+    quick.appendChild(div);
+  });
+}
+
+function renderRecipes(){
+  const el = document.getElementById('recipesGrid'); el.innerHTML = '';
+  recipes.forEach(r=>{
+    const card = document.createElement('div'); card.className='card';
+    const ingHtml = r.ingredients.map(i=>`<div class="ingredient-row"><div>${escapeHtml(i.name)}</div><div>${i.shopId ? `<button class="ghost" onclick="addToFridge('${escapeHtml(i.name)}','${i.shopId}')">Add to Fridge</button>` : ''}</div></div>`).join('');
+    card.innerHTML = `
+      <img src="${r.image}" alt="${escapeHtml(r.title)}">
+      <h3>${escapeHtml(r.title)}</h3>
+      <div class="buttons">
+        <button class="ghost" onclick="toggleDetails('${r.id}')">View ingredients & steps</button>
+        <button class="ghost" onclick="planRecipe('${r.id}', this)">Plan</button>
+        <button onclick="sendRecipeWhatsApp('${r.id}', this)">Cook (WhatsApp)</button>
+        <button class="ghost" onclick="addRecipeIngredientsToCart('${r.id}')">Add ingredients → Shop</button>
+      </div>
+      <div id="details-${r.id}" class="hidden" style="margin-top:10px">
+        <strong>Ingredients</strong>
+        ${ingHtml}
+        <strong style="display:block;margin-top:8px">Steps</strong>
+        <ol style="margin:6px 0 0 18px">${r.steps.map(s=>`<li>${escapeHtml(s)}</li>`).join('')}</ol>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function renderShop(){
+  const el = document.getElementById('shopGrid'); el.innerHTML = '';
+  shopItems.forEach(s=>{
+    const card = document.createElement('div'); card.className='card shop-item'; card.id = 'shop-' + s.id;
+    card.innerHTML = `
+      <img src="${s.image}" alt="${escapeHtml(s.name)}">
+      <h4>${escapeHtml(s.name)}</h4>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div style="font-weight:700">KES ${s.price}</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="ghost" onclick="addToFridge('${escapeHtml(s.name)}','${s.id}')">Save</button>
+          <button onclick="addShopToCart('${s.id}', this)">Add to cart</button>
+        </div>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function renderFridge(){
+  const el = document.getElementById('fridgeList'); el.innerHTML = '';
+  if(state.fridge.length === 0){ el.innerHTML = '<div class="card">Your fridge is empty.</div>'; return; }
+  state.fridge.forEach(f=>{
+    const c = document.createElement('div'); c.className='card';
+    c.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${escapeHtml(f.name)}</strong></div><div><button class="ghost" onclick="goToShop('${f.shopId}')">View in shop</button></div></div>`;
+    el.appendChild(c);
+  });
+}
+
+function renderCart(){
+  const el = document.getElementById('cartItems'); el.innerHTML = '';
+  if(state.cart.length === 0){ el.innerHTML = '<div class="card">Cart is empty</div>'; document.getElementById('cartTotal').innerText = 0; return; }
+  let total = 0;
+  state.cart.forEach((c, idx)=>{
+    const row = document.createElement('div'); row.className='card'; row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.marginBottom='6px';
+    row.innerHTML = `<div>${escapeHtml(c.name)} x ${c.qty}</div><div>${c.price * c.qty} KES <button class="ghost" onclick="removeCartItem(${idx})">Remove</button></div>`;
+    el.appendChild(row);
+    total += c.price * c.qty;
+  });
+  document.getElementById('cartTotal').innerText = total;
+}
+
+function renderCartCount(){
+  const cnt = state.cart.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('cartCount').innerText = cnt;
+}
+
+/* ============================
+   Actions
+   ============================ */
+function toggleDetails(id){
+  const el = document.getElementById('details-' + id);
+  if(!el) return;
+  el.classList.toggle('hidden');
+}
+
+function planRecipe(id, btn){
+  if(!state.planned.includes(id)) state.planned.push(id);
+  saveState();
+  blink(btn);
+}
+
+function sendRecipeWhatsApp(id, btn){
+  const r = recipes.find(x=>x.id===id); if(!r) return;
+  const lines = [];
+  lines.push(`Hello! I want to cook *${r.title}*.`);
+  lines.push('');
+  lines.push('Ingredients:');
+  r.ingredients.forEach(i => lines.push(`- ${i.name}`));
+  lines.push('');
+  lines.push('Steps:');
+  r.steps.slice(0,6).forEach((s,i)=> lines.push(`${i+1}. ${s}`));
+  blink(btn);
+  window.open(`https://wa.me/${CONFIG.PHONE}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
+}
+
+function addRecipeIngredientsToCart(id){
+  const r = recipes.find(x=>x.id===id); if(!r) return;
+  r.ingredients.forEach(i=>{
+    if(i.shopId){
+      const s = findShopById(i.shopId);
+      if(s){
+        const existing = state.cart.find(c => c.id === s.id);
+        if(existing) existing.qty++;
+        else state.cart.push({ id: s.id, name: s.name, price: s.price, qty: 1 });
+      }
+    }
+  });
+  saveState();
+  renderCart();
+}
+
+function addToFridge(name, shopId){
+  if(!state.fridge.find(f=>f.name===name && f.shopId===shopId)) state.fridge.push({ name, shopId });
+  saveState();
+  switchTab('shop');
+  setTimeout(()=> {
+    const el = document.getElementById('shop-' + shopId);
+    if(el){
+      el.style.boxShadow = '0 8px 30px rgba(255,107,53,.18)';
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(()=> el.style.boxShadow='', 900);
+    }
+  }, 300);
+}
+
+function addShopToCart(shopId, btn){
+  const s = findShopById(shopId); if(!s) return;
+  const existing = state.cart.find(c => c.id === s.id);
+  if(existing) existing.qty++;
+  else state.cart.push({ id: s.id, name: s.name, price: s.price, qty: 1 });
+  saveState();
+  blink(btn);
+}
+
+function removeCartItem(index){ state.cart.splice(index,1); saveState(); renderCart(); }
+
+/* Clear cart */
+document.getElementById('clearCart')?.addEventListener('click', ()=>{
+  if(!confirm('Clear cart?')) return;
+  state.cart = []; saveState(); renderCart();
+});
+
+/* Quick bar actions */
+function renderQuickActions(){
+  renderQuickBar();
+  document.getElementById('quickAddGas').addEventListener('click', quickAddGas);
+}
+function quickAddShop(shopId, btn){ addShopToCart(shopId, btn); blink(btn); }
+function quickAddGas(){ quickAddGasAction(); blink(document.getElementById('quickAddGas')); }
+function quickAddGasAction(){
+  const qty = Number(document.getElementById('quickGasQty').value) || 1;
+  const id = 'gas-token';
+  const existing = state.cart.find(c => c.id === id);
+  if(existing) existing.qty += qty;
+  else state.cart.push({ id, name: `Gas tokens x${qty}`, price: state.tokenPrice, qty });
+  saveState();
+}
+
+/* Gas tab */
+const gasQtyEl = document.getElementById('gasQty');
+const gasTotalEl = document.getElementById('gasTotal');
+document.getElementById('tokenPrice').innerText = state.tokenPrice;
+function updateGasTotal(){ gasTotalEl.innerText = (Number(gasQtyEl.value) || 1) * state.tokenPrice; }
+gasQtyEl.addEventListener('input', updateGasTotal);
+document.getElementById('addGas').addEventListener('click', ()=>{
+  const qty = Number(gasQtyEl.value) || 1;
+  const id = 'gas-token';
+  const existing = state.cart.find(c => c.id === id);
+  if(existing) existing.qty += qty;
+  else state.cart.push({ id, name: `Gas tokens x${qty}`, price: state.tokenPrice, qty });
+  saveState(); renderCart();
+});
+
+/* WhatsApp builders */
+function buildCartMessage(){
+  const lines = ['🛒 Unico Kitchen Order:'];
+  if(state.cart.length === 0) lines.push('(Cart is empty)');
+  state.cart.forEach(c => lines.push(`- ${c.name} x ${c.qty} = ${c.price * c.qty} KES`));
+  const total = state.cart.reduce((s,i)=>s + i.price * i.qty, 0);
+  lines.push(`Total: ${total} KES`);
+  if(state.fridge.length > 0){
+    lines.push('');
+    lines.push('Saved fridge items:');
+    state.fridge.forEach(f => lines.push(`- ${f.name}`));
+  }
+  return lines.join('\n');
+}
+
+function sendCartToWhatsApp(btn){
+  blink(btn);
+  const msg = buildCartMessage();
+  window.open(`https://wa.me/${CONFIG.PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+document.getElementById('sendCart')?.addEventListener('click', function(){ sendCartToWhatsApp(this); });
+document.getElementById('sendOrderHeader').addEventListener('click', function(){ sendCartToWhatsApp(this); });
+
+function buildPlanMessage(){
+  if(state.planned.length === 0) return 'Hello! I have no planned recipes yet.';
+  const lines = ['Hello! I plan to cook:'];
+  state.planned.forEach(id => {
+    const r = recipes.find(rr => rr.id === id);
+    if(r) lines.push(`- ${r.title}`);
+  });
+  return lines.join('\n');
+}
+document.getElementById('sendPlanHeader').addEventListener('click', function(){ blink(this); window.open(`https://wa.me/${CONFIG.PHONE}?text=${encodeURIComponent(buildPlanMessage())}`, '_blank'); });
+
+/* Navigation & utils */
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== name));
+  if(name === 'shop') renderShop();
+  if(name === 'recipes') renderRecipes();
+  if(name === 'fridge') renderFridge();
+  if(name === 'gas') updateGasTotal();
+}
+document.getElementById('navTabs').addEventListener('click', (e)=>{ if(e.target.dataset.tab) switchTab(e.target.dataset.tab); });
+
+document.getElementById('openCartBtn').addEventListener('click', ()=>{
+  const panel = document.getElementById('cartPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  renderCart();
+});
+
+function goToShop(shopId){
+  switchTab('shop');
+  setTimeout(()=>{ const el = document.getElementById('shop-' + shopId); if(el){ el.style.boxShadow='0 8px 30px rgba(255,107,53,.18)'; el.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>el.style.boxShadow='',900);} },200);
+}
+
+/* ============================
+   Init
+   ============================ */
+(function init(){
+  state.tokenPrice = CONFIG.TOKEN_PRICE;
+  document.getElementById('tokenPrice').innerText = state.tokenPrice;
+  document.getElementById('gasTotal').innerText = state.tokenPrice * (Number(document.getElementById('gasQty').value) || 1);
+
+  renderQuickActions();
+  renderRecipes();
+  renderShop();
+  renderFridge();
+  renderCart();
+  renderCartCount();
+})();
 </script>
+</body>
+</html>
+
